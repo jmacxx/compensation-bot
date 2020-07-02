@@ -16,9 +16,6 @@
         <input type="radio" id="issue4" name="issue" onclick="issue4Txt();">
         <input type="radio" id="issue5" name="issue" onclick="issue5Txt();">
     <br>
-
-
-
         <textarea rows=20 cols=120 id="phrase"></textarea>
     <br>
     <br>
@@ -63,7 +60,7 @@
             +">    Specify the total amount of BSQ you are requesting:\n"
             +"\n"
             +"- USD requested: $1050\n"
-            +"- BSQ requested:1050/0.63 = 1875 BSQ\n"
+            +"- BSQ requested:1050/0.63 = 1667 BSQ\n"
             +"- BSQ rate: 0.63 USD per BSQ as per #519\n"
             +"\n"
             +"## Contributions delivered\n"
@@ -89,7 +86,7 @@
             +"> Specify the total amount of USD you are requesting:\n"
             +"\n"
             +"- USD requested: $6,475\n"
-            +"- BSQ requested:0\n"
+            +"- BSQ requested: 10277\n"
             +"- BSQ rate: 0.63 USD per BSQ as per #519\n"
             +"\n"
             +"## Contributions delivered\n"
@@ -124,7 +121,7 @@
             +"\n"
             +"- USD requested: 125 USD\n"
             +"- BSQ rate: 0.63 USD per BSQ as per #519\n"
-            +"- BSQ requested: 125 / 0.63 = 223 BSQ\n"
+            +"- BSQ requested: 125 / 0.63 = 198 BSQ\n"
             +"\n"
             +"## Contributions delivered\n"
             +"\n"
@@ -289,16 +286,6 @@
         document.getElementById('phrase').value = str;
     }
 
-
-
-
-
-
-
-
-    
-    
-    
     function runLinter(){
         document.getElementById('results').value = "";
         var issuebody = document.getElementById('phrase').value;
@@ -377,7 +364,6 @@
             addTestOutput(testName3, testOutput, testExpected3);
         }
         {
-            debugger;
             var testName0 = "missing summary section";
             var testName1 = "bad request lineitem";
             var testName2 = "unknown team";
@@ -509,23 +495,15 @@
         }
     }
 
-
-
-
     function addTestOutput(testName, testOutput, testExpected) {
         var testResult = "Fail ❌";
         if (testOutput.match(testExpected)) { testResult = "Pass ✓"; } else { document.getElementById('results').value += testOutput + testExpected + "\n"; }
         document.getElementById('results').value += testName + " : " + testResult + "\n";
     }
 
-
-
-
-
-
 </script>
 
-<script src="../crParser.js">
+<script src="./crParser.js">
 </script>
 
 </html>

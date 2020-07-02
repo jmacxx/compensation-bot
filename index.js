@@ -65,7 +65,6 @@ module.exports = app => {
             return;
         }
         crParser.parseContributionRequest(context.payload.issue.body);
-        applyLabels(context, crParser.getTeamLabels(), /^team:/g);
 
         // issuance should be written after the comp request has been accepted
         if (isIssueAccepted(context)) {

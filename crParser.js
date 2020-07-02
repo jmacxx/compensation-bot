@@ -203,6 +203,8 @@
             for (i=tableInfo.beginAtLine; i < lines.length; i++) {
                 var x = lines[i].replace(/[ \t\r]/g, '');
                 x = x.replace(/<!--[\s\S]*?-->/g, ''); // remove HTML comments
+                x = x.replace(/<!--[\s\S]*?/g, ''); // remove HTML comments
+                x = x.replace(/[\s\S]*?-->/g, ''); // remove HTML comments
                 if (x.match(/^##.*INPROGRESS/gi)) {
                     // found the in progress section - we'll have to skip this
                     inProgress = true;
@@ -320,7 +322,7 @@
             this.compRequest = {
                 errorList: [],
                 infoList: [],
-                bsqRate: 0.63,
+                bsqRate: 0.65, // see github.com/jmacxx/compensation-bot/issues/9
                 summary: { bsqRequested: null, usdRequested: null, startLine: 0, endLine: 0 }, 
                 requests: [],
                 issuance: {
@@ -364,7 +366,7 @@
                     }
                     var bsqPerTeam = this.compRequest.summary.bsqRequested*(usdPerTeam/this.compRequest.summary.usdRequested);
                     // only track the team bucket if amount claimed is greater than zero
-                    if (bsqPerTeam > 0) {
+                    if (bsqPerTeam > 0 || usdPerTeam > 0) {
                         usdIssuancePerTeam.push({ name: team, amount: Number(usdPerTeam) });
                         bsqIssuancePerTeam.push({ name: team, amount: Number(bsqPerTeam) });
                         compRequestTotalUsd += usdPerTeam;
