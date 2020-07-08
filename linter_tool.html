@@ -24,6 +24,9 @@
     <button id='CLEAR' onclick='clearResults();'>clear results</button>
     <button id='TEST'  onclick='runTestSuite();'>run tests</button>
     <br>
+    <small>BSQ rate:<input size=4 type='text' id='bsqRate'></input></small><button id='BSQRATE' onclick='loadBsqRate();'>refresh</button>
+    <br>
+    <small>Issue:<input size=4 type='text' id='issue' value='604'></input></small><button id='LOADISSUE' onclick='loadIssue();'>load</button>
     <br>
         <textarea rows=20 cols=120 id="results"></textarea>
     </center>
@@ -51,8 +54,35 @@
         //var str = "https://api.github.com/repos/jmacxx/compensation-bot/issues/1";
         //document.getElementById('phrase').value = str;
         issue0Txt();
+        document.getElementById('bsqRate').value = crParserNS.bsqRate;
+        
     });
-    
+
+    function loadBsqRate() {
+        debugger;
+        var html = httpGet('https://api.github.com/repos/bisq-network/compensation/issues?creator=mwithm');
+        var result = crParserNS.configLoadBsqRate(html);
+        document.getElementById('bsqRate').value = crParserNS.bsqRate;
+    }
+        
+    function loadIssue() {
+        // code to read an issue from github..
+        // I had to stop using this because github has a limit on the number of times it can be called
+        debugger;
+        var issueNbr = document.getElementById('issue').value;
+        var strIssue = httpGet("https://api.github.com/repos/bisq-network/compensation/issues/"+issueNbr);
+        var issue = JSON.parse(strIssue);
+        if (typeof issue.body == 'undefined') {
+            var str = "coult not retrieve github issue: ";
+            if (typeof issue.message != 'undefined') {
+                str += issue.message;
+            }
+            document.getElementById('results').innerHTML = str;
+            return;
+        }
+        document.getElementById('phrase').value = issue.body;
+    }
+        
     // some sample compensation reports for testing purposes
     function issue0Txt() {
         var str = "## Summary\n"
@@ -287,6 +317,9 @@
     }
 
     function runLinter(){
+        // use the bsq rate specified on the screen
+        var bsqRate = document.getElementById('bsqRate').value;
+        crParserNS.bsqRate = bsqRate;
         document.getElementById('results').value = "";
         var issuebody = document.getElementById('phrase').value;
         crParserNS.parseContributionRequest(issuebody);
@@ -295,6 +328,9 @@
     }
 
     function runIssuance(){
+        // use the bsq rate specified on the screen
+        var bsqRate = document.getElementById('bsqRate').value;
+        crParserNS.bsqRate = bsqRate;
         document.getElementById('results').value = "";
         var issuebody = document.getElementById('phrase').value;
         crParserNS.parseContributionRequest(issuebody);
@@ -303,27 +339,18 @@
     }
 
 
-    // code to read an issue from github..
-    // I had to stop using this because github has a limit on the number of times it can be called
-    
-    //var strUrl = document.getElementById('phrase').value;
-    //var strIssue = crParser.httpGet(strUrl); //  https://api.github.com/repos/bisq-network/compensation/issues/523");
-    //var issue = JSON.parse(strIssue);
-    //if (typeof issue.body == 'undefined') {
-    //    var str = "coult not retrieve github issue: ";
-    //    if (typeof issue.message != 'undefined') {
-    //        str += issue.message;
-    //    }
-    //    document.getElementById('results').innerHTML = str;
-    //    return;
-    //}
-    //crParser.parseContributionRequest(issue.body);
 
     function clearResults(){
         document.getElementById('results').value = "";
     }
 
     function runTestSuite(){
+        var bsqRate = document.getElementById('bsqRate').value;
+        crParserNS.bsqRate = bsqRate;
+        if (bsqRate != "0.63") {
+            alert("Please note, tests were written assuming the BSQ rate used is 0.63");
+        }
+        // for testing use the bsq rate specified on the screen
         clearResults();
         {
             var testName = "empty invalid CR";
@@ -343,7 +370,7 @@
             var testName1 = "invalid BSQ rate";
             var testName2 = "mising USD in summary";
             var testName3 = "mising BSQ in summary";
-            var testExpected1 = /Invalid BSQ rate/gm;
+            var testExpected1 = /Incorrect BSQ rate/gm;
             var testExpected2 = /USD amount not specified in summary section/gm;
             var testExpected3 = /BSQ amount not specified in summary section/gm;
             var testInput = "## Summary\n\n- BSQ rate: 0.56 USD per BSQ as per #519\n\n";
@@ -499,6 +526,13 @@
         var testResult = "Fail ❌";
         if (testOutput.match(testExpected)) { testResult = "Pass ✓"; } else { document.getElementById('results').value += testOutput + testExpected + "\n"; }
         document.getElementById('results').value += testName + " : " + testResult + "\n";
+    }
+
+    function httpGet(theUrl) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+        xmlHttp.send( null );
+        return xmlHttp.responseText;
     }
 
 </script>

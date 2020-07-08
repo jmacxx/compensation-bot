@@ -8,6 +8,7 @@
         BSQ_precision: 2, // decimal places
         USD_precision: 2, // decimal places
         compRequest: null,
+        bsqRate: 0.99, // will be read from issues list
 
         writeLinterSummary: function() {
             var results = "";
@@ -80,7 +81,7 @@
                 }
             }
             if (this.compRequest.summary.bsqRequested != null) {
-                var bsqDerivedFromUsd = this.compRequest.summary.usdRequested / this.compRequest.bsqRate;
+                var bsqDerivedFromUsd = this.compRequest.summary.usdRequested / this.bsqRate;
                 var bsqDifference = Math.abs(this.compRequest.summary.bsqRequested - bsqDerivedFromUsd);
                 if (bsqDifference >= tolerance) {
                     this.compRequest.errorList.push("ERROR: Total BSQ does not match the sum of line items:");
@@ -173,11 +174,10 @@
                         if (z.length > 0) {
                             var specifiedBsqRate = Number(z);
                             var precision = 0.001;
-                            if (Math.abs(this.compRequest.bsqRate - specifiedBsqRate) > precision)	{
-                                this.compRequest.errorList.push("Invalid BSQ rate specified: " + z);
+                            if (Math.abs(this.bsqRate - specifiedBsqRate) > precision)	{
+                                this.compRequest.errorList.push("Incorrect BSQ rate specified: " + z + ", expected: " + this.bsqRate);
                             }
-                            this.compRequest.bsqRate = specifiedBsqRate;
-                            this.compRequest.infoList.push("Read BSQ rate from summary: " + this.compRequest.bsqRate);
+                            this.compRequest.infoList.push("Read BSQ rate from summary: " + specifiedBsqRate);
                         }
                     }
                 }
@@ -322,7 +322,6 @@
             this.compRequest = {
                 errorList: [],
                 infoList: [],
-                bsqRate: 0.65, // see github.com/jmacxx/compensation-bot/issues/9
                 summary: { bsqRequested: null, usdRequested: null, startLine: 0, endLine: 0 }, 
                 requests: [],
                 issuance: {
@@ -387,13 +386,28 @@
             }
             return this.writeLinterSummary();
         },
-
-        httpGet : function(theUrl) {
-            var xmlHttp = new XMLHttpRequest();
-            xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
-            xmlHttp.send( null );
-            return xmlHttp.responseText;
+        
+        configLoadBsqRate : function(html) {
+            var lines = html.split(',');
+            for (i=0; i < lines.length; i++) {
+                var x = lines[i].toUpperCase().replace(/[ \n\t\r`*-]/g, '');
+                x = x.replace(/<!--[\s\S]*?-->/g, ''); // remove HTML comments
+                if (x.match(/^"TITLE":/g)) {
+                    // found line containing the rate
+                    x = x.replace(/"TITLE":/g, '');
+                    var y = x.replace(/^"BSQRATEFORCYCLE.*IS/g, '');
+                    var fields = y.split("USD");
+                    var z = fields[0].replace(/[^\d.]/g, '');
+                    if (z.length > 0) {
+                        var specifiedBsqRate = Number(z);
+                        this.bsqRate = specifiedBsqRate;
+                        return "Read BSQ rate from Github: " + this.bsqRate;
+                    }
+                }
+            }
+            return "failed to read BSQ rate from Github: " + lines.length;
         },
+
 
     };  // end of crParserNS
 

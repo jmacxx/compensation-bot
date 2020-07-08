@@ -1,4 +1,4 @@
-
+var XMLHttpRequest = require("xmlhttprequest").XMLHttpRequest;
 var crParser = require('./crParser')
 
 /**
@@ -7,6 +7,8 @@ var crParser = require('./crParser')
  */
 module.exports = app => {
     app.log('app loaded!')
+    var html = httpGet('https://api.github.com/repos/bisq-network/compensation/issues?creator=mwithm');
+    app.log(crParser.configLoadBsqRate(html));
 
     // bot workflow:
     // if [WIP] in title then don't do anything
@@ -115,6 +117,16 @@ module.exports = app => {
             }
         }
     }
+
+    function httpGet(theUrl) {
+        var xmlHttp = new XMLHttpRequest();
+        xmlHttp.open( "GET", theUrl, false ); // false for synchronous request
+        xmlHttp.send( null );
+        return xmlHttp.responseText;
+    }
+
+
+
 
     // For more information on building apps:
     // https://probot.github.io/docs/
