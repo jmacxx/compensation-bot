@@ -9,6 +9,8 @@
         USD_precision: 2, // decimal places
         compRequest: null,
         bsqRate: 0.99, // will be read from issues list
+        cycle: 99,       // will be read from issues list
+        validTeams: [ "dev", "growth", "ops", "support", "security", "admin" ],
 
         writeLinterSummary: function() {
             var results = "";
@@ -48,11 +50,13 @@
                     return results;
                 }
                 results += "## Issuance by Team:\n";
-                results += "|team|amount|\n";
-                results += "|---|---|\n";
-                var all_info = this.compRequest.issuance.byTeam.BSQ;
-                for (const i of all_info) {
-                    results += "|" + i.name + "|" + i.amount.toFixed(this.BSQ_precision) + " BSQ|\n";
+                results += "|team|amount BSQ|amount USD|\n";
+                results += "|---|---|---|\n";
+                var all_info = this.compRequest.issuance.byTeam;
+                for (const res of this.compRequest.issuance.byTeam) {
+                    results += "|" + res.team + "|"
+                        + res.bsq.toFixed(this.BSQ_precision) + "|"
+                        + res.usd.toFixed(this.USD_precision) + "|\n";
                 }
 
                 results += "\n";
@@ -95,21 +99,17 @@
 
         getTeamLabels : function() {
             var retVal = [];
-            //for (const team of this.compRequest.teams) {
-            //    retVal.push("team:"+team.toLowerCase());
-            //}
-            var all_info = this.compRequest.issuance.byTeam.BSQ;
+            var all_info = this.compRequest.issuance.byTeam;
             for (const i of all_info) {
-                retVal.push("team:"+i.name.toLowerCase());
+                retVal.push("team:"+i.team.toLowerCase());
             }
             return retVal;
         },
 
         validateTeam : function(team) {
-            validTeams = [ "ADMIN", "DEV", "GROWTH", "OPS", "SUPPORT" ];
             var cleanTeam = team.replace(/\*/g, '');
-            if (validTeams.includes(cleanTeam.toUpperCase())) {
-                return cleanTeam.toUpperCase();
+            if (this.validTeams.includes(cleanTeam.toLowerCase())) {
+                return cleanTeam.toLowerCase();
             }
             this.compRequest.errorList.push("Unknown team specified: " + cleanTeam);
             return null;
@@ -127,6 +127,22 @@
             }
             this.compRequest.errorList.push("Invalid amount specified: " + amount);
             return 0;
+        },
+
+        removeMultilineComments(lines) {
+            var linesToRemove = [];
+            var inComment = false;
+            for (i=0; i < lines.length; i++) {
+                var x = lines[i].toUpperCase().replace(/[ \t\r`*]/g, '');
+                x = x.replace(/<!--[\s\S]*?-->/g, ''); // remove HTML comments
+                if (x.match(/<!--/g)) { linesToRemove.push(i); inComment = true; }
+                else if (x.match(/-->/g)) { linesToRemove.push(i); inComment = false; }
+                else if (inComment == true) linesToRemove.push(i);
+            }
+            for (i=linesToRemove.length-1; i>=0; i--) {
+                lines.splice(linesToRemove[i],1);
+            }
+            return lines;
         },
 
         // we need to parse summary info from comp request
@@ -218,7 +234,7 @@
                 if (inProgress == true) {
                     continue;   // skipping the inprogress section
                 }
-                if (tableInfo.foundStart < 0 && x.toUpperCase() == "|TITLE|TEAM|USD|LINK|NOTES|") {
+                if (tableInfo.foundStart < 0 && x.match(/TITLE\|TEAM\|USD\|LINK\|NOTES/gi)) {
                     // found the start of the markdown table.
                     tableInfo.foundStart = i;
                     continue;
@@ -237,7 +253,8 @@
             // skip the header line
             for (i=tableInfo.foundStart+1; i < tableInfo.foundEnd; i++) {
                 var x = lines[i].replace(/[ \t\r]/g, '');
-                if (x == "|---|---|---|---|---|") { continue; } // skip blank table rows
+                if (!x.match(/^\|/gi)) x = "|"+x; // some people do not specify first bar
+                if (x.match(/\|(-)\1{1,}\|(-)\1{1,}\|(-)\1{1,}\|(-)\1{1,}\|(-)\1{1,}\|/gi)) { continue; } // skip blank table rows
                 if (x == "||||||") { continue; } // skip blank table rows
                 tableInfo.tableLines.push(x);
             }
@@ -327,14 +344,12 @@
                 issuance: {
                     total_USD: null, 
                     total_BSQ: null,
-                    byTeam: {
-                        USD: [], 
-                        BSQ: []
-                    }
+                    byTeam: []
                 }
             };
 
             var lines = crBodyText.split('\n');
+            lines = this.removeMultilineComments(lines);
             this.findCrSummaryInText(lines);
             // grab the markdown table(s), ignore the rest
             // start after the summary section
@@ -351,23 +366,21 @@
             if (this.parseRequestsFromTable(tableInfo.tableLines) > 0) {
                 // now sum up the USD amount by team 
                 // and calculate the equivalent BSQ amount based on proportion of total BSQ requested
-                var usdIssuancePerTeam = [ ];
-                var bsqIssuancePerTeam = [ ];
+                var issuancePerTeam = [ ];
                 var compRequestTotalUsd = 0;
                 var compRequestTotalBsq = 0;
-                for (const team of this.compRequest.teams) {
+                for (const currentTeam of this.compRequest.teams) {
                     var usdPerTeam = 0;
                     var all_info = this.compRequest.requests;
                     for (const i of all_info) {
-                        if (i.team == team) {
+                        if (i.team == currentTeam) {
                             usdPerTeam += i.amount;
                         }
                     }
                     var bsqPerTeam = this.compRequest.summary.bsqRequested*(usdPerTeam/this.compRequest.summary.usdRequested);
                     // only track the team bucket if amount claimed is greater than zero
                     if (bsqPerTeam > 0 || usdPerTeam > 0) {
-                        usdIssuancePerTeam.push({ name: team, amount: Number(usdPerTeam) });
-                        bsqIssuancePerTeam.push({ name: team, amount: Number(bsqPerTeam) });
+                        issuancePerTeam.push({ team: currentTeam, bsq: Number(bsqPerTeam.toFixed(this.BSQ_precision)), usd: Number(usdPerTeam.toFixed(this.USD_precision)) });
                         compRequestTotalUsd += usdPerTeam;
                         compRequestTotalBsq += bsqPerTeam;
                     }
@@ -375,8 +388,7 @@
                 // set the team totals in the compRequest object
                 this.compRequest.issuance.total_USD = Number(compRequestTotalUsd);
                 this.compRequest.issuance.total_BSQ = Number(compRequestTotalBsq);
-                this.compRequest.issuance.byTeam.USD = usdIssuancePerTeam;
-                this.compRequest.issuance.byTeam.BSQ = bsqIssuancePerTeam;
+                this.compRequest.issuance.byTeam = issuancePerTeam;
                 if (this.verifyItemsMatchSummaryTotal()) {
                     // after validating the amounts match (within tolerance), set the issuance equal to what was requested
                     // this is because sometimes users round their amounts up or down to the nearest whole number (which we consider acceptable)
@@ -395,17 +407,24 @@
                 if (x.match(/^"TITLE":/g)) {
                     // found line containing the rate
                     x = x.replace(/"TITLE":/g, '');
-                    var y = x.replace(/^"BSQRATEFORCYCLE.*IS/g, '');
-                    var fields = y.split("USD");
+                    var cycleTxt = x.replace(/^"BSQRATEFORCYCLE/g, '');
+                    var fields2 = cycleTxt.split("IS");
+                    var y = fields2[0].replace(/[^\d.]/g, '');
+                    if (y.length > 0) {
+                        var specifiedBsqCycle = Number(y);
+                        this.cycle = specifiedBsqCycle;
+                    }
+                    var rateTxt = x.replace(/^"BSQRATEFORCYCLE.*IS/g, '');
+                    var fields = rateTxt.split("USD");
                     var z = fields[0].replace(/[^\d.]/g, '');
                     if (z.length > 0) {
                         var specifiedBsqRate = Number(z);
                         this.bsqRate = specifiedBsqRate;
-                        return "Read BSQ rate from Github: " + this.bsqRate;
+                        return "Read from Github: BSQ rate=" + this.bsqRate + " cycle=" + this.cycle;
                     }
                 }
             }
-            return "failed to read BSQ rate from Github: " + lines.length;
+            return "failed to read BSQ rate/cycle from Github: " + lines.length;
         },
 
 

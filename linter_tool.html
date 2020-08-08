@@ -400,14 +400,14 @@
             var testExpected1 = /request lineitem #2 did not pass validation/g;
             var testExpected2 = /Unknown team specified: ATeam/g;
             var testExpected3 = /Tableformat: request lineitem #3 does not have the requisite number of fields/g;
-            var testExpected4 = /request lineitem #1 did not pass validation/g;
+            //var testExpected4 = /request lineitem #1 did not pass validation/g;
             var testInput = "## Contributions delivered\n\n|title|team|USD|link|notes|\n|---|---|---|---|---|\nMediator|Support|1000|||\n|BTC Node Operator|A Team|50|||\n|Missing fields\n<!-- hello world -->\n\n";
             var testOutput = crParserNS.parseContributionRequest(testInput);
             addTestOutput(testName0, testOutput, testExpected0);
             addTestOutput(testName1, testOutput, testExpected1);
             addTestOutput(testName2, testOutput, testExpected2);
             addTestOutput(testName3, testOutput, testExpected3);
-            addTestOutput(testName4, testOutput, testExpected4);
+            // #1 is now acceptable // addTestOutput(testName4, testOutput, testExpected4);
         }
         {
             var testName1 = "tabular lineitem format";
@@ -415,11 +415,11 @@
             var testName2 = "bullet lineitem format";
             var testInput2 = "## Summary\n- USD requested: $60\n- BSQ requested:95.23\n- BSQ rate: 0.63\n## Contributions delivered\n\n- Admin blah blah blah 10 USD\n- Growth blah blah blah 11 USD\n- Ops blah blah blah 12 USD\n- Dev blah blah blah 13 USD\n- Support blah blah blah 14 USD\n";
             var testExpected0 = /NO ERRORS/gm;
-            var testExpected1 = /Parsed lineitem: {"team":"ADMIN","amount":10}/gm;
-            var testExpected2 = /Parsed lineitem: {"team":"GROWTH","amount":11}/gm;
-            var testExpected3 = /Parsed lineitem: {"team":"OPS","amount":12}/gm;
-            var testExpected4 = /Parsed lineitem: {"team":"DEV","amount":13}/gm;
-            var testExpected5 = /Parsed lineitem: {"team":"SUPPORT","amount":14}/gm;
+            var testExpected1 = /Parsed lineitem: {"team":"ADMIN","amount":10}/gmi;
+            var testExpected2 = /Parsed lineitem: {"team":"GROWTH","amount":11}/gmi;
+            var testExpected3 = /Parsed lineitem: {"team":"OPS","amount":12}/gmi;
+            var testExpected4 = /Parsed lineitem: {"team":"DEV","amount":13}/gmi;
+            var testExpected5 = /Parsed lineitem: {"team":"SUPPORT","amount":14}/gmi;
             var testOutput = crParserNS.parseContributionRequest(testInput1);
             addTestOutput(testName1, testOutput, testExpected0);
             addTestOutput(testName1, testOutput, testExpected1);
@@ -441,10 +441,10 @@
             var testName1 = "bad numbers error test 1";
             var testInput1 = "## Summary\n- BSQ requested:99999\n- USD requested: $270\n- BSQ rate: 0.63\n## Contributions delivered\n|title|team|USD|link|notes|\n|title|dev|50|||\n|title|dev|60|||\n|title|dev|80|||\n|title|DEV|80|||\n<!-- hello world -->\n";
             var testOutput = crParserNS.parseContributionRequest(testInput1);
-            addTestOutput(testName1, testOutput, /Total BSQ does not match the sum of line items/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":50}/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":60}/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":80}/gm);
+            addTestOutput(testName1, testOutput, /Total BSQ does not match the sum of line items/gmi);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":50}/gmi);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":60}/gmi);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":80}/gmi);
             var testOutput2 = crParserNS.writeIssuance();
             addTestOutput(testName1+" issuance", testOutput2, /Issuance cannot be displayed as there were errors in the comp request/gm);
         }
@@ -454,11 +454,11 @@
             var testInput1 = "## Summary\n- BSQ requested:428\n- USD requested: $270\n- BSQ rate: 0.63\n## Contributions delivered\n|title|team|USD|link|notes|\n|title|dev|50|||\n|title|dev|60|||\n|title|dev|80|||\n|title|DEV|80|||\n<!-- hello world -->\n";
             var testOutput = crParserNS.parseContributionRequest(testInput1);
             addTestOutput(testName1, testOutput, /NO ERRORS/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":50}/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":60}/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":80}/gm);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":50}/gmi);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":60}/gmi);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":80}/gmi);
             var testOutput2 = crParserNS.writeIssuance();
-            addTestOutput(testName1+" issuance", testOutput2, /DEV.428\.00 BSQ/gm);
+            addTestOutput(testName1+" issuance", testOutput2, /DEV.428.00.270.00/gmi);
             addTestOutput("total issuance should match BSQ requested", testOutput2, /Total Issuance: 428.00 BSQ/gm);
         }
         {
@@ -467,9 +467,9 @@
             var testInput1 = "## Summary\n- USD requested: $250\n- BSQ requested:396\n- BSQ rate: 0.63\n## Contributions delivered\n|title|team|USD|link|notes|\n|title|ops|250|||\n";
             var testOutput = crParserNS.parseContributionRequest(testInput1);
             addTestOutput(testName1, testOutput, /NO ERRORS/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"OPS","amount":250}/gm);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"OPS","amount":250}/gmi);
             var testOutput2 = crParserNS.writeIssuance();
-            addTestOutput(testName1+" issuance", testOutput2, /OPS.396\.00 BSQ/gm);
+            addTestOutput(testName1+" issuance", testOutput2, /OPS.396.00.250.00/gmi);
             addTestOutput("total issuance should match BSQ requested", testOutput2, /Total Issuance: 396.00 BSQ/gm);
         }
         {
@@ -478,9 +478,9 @@
             var testInput1 = "## Summary\n- USD requested: $100\n- BSQ requested:158.73\n- BSQ rate: 0.63\n## Contributions delivered\n|title|team|USD|link|notes|\n|title|dev|100|||\n";
             var testOutput = crParserNS.parseContributionRequest(testInput1);
             addTestOutput(testName1, testOutput, /NO ERRORS/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":100}/gm);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":100}/gmi);
             var testOutput2 = crParserNS.writeIssuance();
-            addTestOutput(testName1+" issuance", testOutput2, /DEV.158\.73 BSQ/gm);
+            addTestOutput(testName1+" issuance", testOutput2, /DEV.158.73.100.00/gmi);
             addTestOutput("total issuance should match BSQ requested", testOutput2, /Total Issuance: 158.73 BSQ/gm);
         }
         {
@@ -489,9 +489,9 @@
             var testInput1 = "## Summary\n- USD requested: $750\n- BSQ requested:1190\n- BSQ rate: 0.63\n## Contributions delivered\n|title|team|USD|link|notes|\n|title|ops|750|||\n";
             var testOutput = crParserNS.parseContributionRequest(testInput1);
             addTestOutput(testName1, testOutput, /NO ERRORS/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"OPS","amount":750}/gm);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"OPS","amount":750}/gmi);
             var testOutput2 = crParserNS.writeIssuance();
-            addTestOutput(testName1+" issuance", testOutput2, /OPS.1190\.00 BSQ/gm);
+            addTestOutput(testName1+" issuance", testOutput2, /OPS.1190.00.750.00/gmi);
             addTestOutput("total issuance should match BSQ requested", testOutput2, /Total Issuance: 1190.00 BSQ/gm);
         }
         {
@@ -500,9 +500,9 @@
             var testInput1 = "## Summary\n- USD requested: $600\n- BSQ requested:952.38\n- BSQ rate: 0.63\n## Contributions delivered\n|title|team|USD|link|notes|\n|title|ops|600|||\n";
             var testOutput = crParserNS.parseContributionRequest(testInput1);
             addTestOutput(testName1, testOutput, /NO ERRORS/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"OPS","amount":600}/gm);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"OPS","amount":600}/gmi);
             var testOutput2 = crParserNS.writeIssuance();
-            addTestOutput(testName1+" issuance", testOutput2, /OPS.952\.38 BSQ/gm);
+            addTestOutput(testName1+" issuance", testOutput2, /OPS.952.38.600.00/gmi);
             addTestOutput("total issuance should match BSQ requested", testOutput2, /Total Issuance: 952.38 BSQ/gm);
         }
         {
@@ -511,13 +511,13 @@
             var testInput1 = "## Summary\n- USD requested: $1025\n- BSQ requested:1627\n- BSQ rate: 0.63\n## Contributions delivered\n|title|team|USD|link|notes|\n|title|growth|425|||\n|title|support|100|||\n|title|admin|500|||\n";
             var testOutput = crParserNS.parseContributionRequest(testInput1);
             addTestOutput(testName1, testOutput, /NO ERRORS/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"GROWTH","amount":425}/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"SUPPORT","amount":100}/gm);
-            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"ADMIN","amount":500}/gm);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"GROWTH","amount":425}/gmi);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"SUPPORT","amount":100}/gmi);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"ADMIN","amount":500}/gmi);
             var testOutput2 = crParserNS.writeIssuance();
-            addTestOutput(testName1+" issuance", testOutput2, /GROWTH.674\.61/gm);
-            addTestOutput(testName1+" issuance", testOutput2, /SUPPORT.158\.73 BSQ/gm);
-            addTestOutput(testName1+" issuance", testOutput2, /ADMIN.793\.66 BSQ/gm);
+            addTestOutput(testName1+" issuance", testOutput2, /GROWTH.674.61.425.00/gmi);
+            addTestOutput(testName1+" issuance", testOutput2, /SUPPORT.158.73.100.00/gmi);
+            addTestOutput(testName1+" issuance", testOutput2, /ADMIN.793.66.500.00/gmi);
             addTestOutput("total issuance should match BSQ requested", testOutput2, /Total Issuance: 1627.00 BSQ/gm);
         }
     }
