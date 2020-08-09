@@ -520,6 +520,17 @@
             addTestOutput(testName1+" issuance", testOutput2, /ADMIN.793.66.500.00/gmi);
             addTestOutput("total issuance should match BSQ requested", testOutput2, /Total Issuance: 1627.00 BSQ/gm);
         }
+        {
+            // tests using real numbers submitted by users
+            var testName1 = "real numbers test 634";
+            var testInput1 = "## Summary\n- **BSQ requested**: **`79.37`**\n- USD requested: 50\n- BSQ rate: 0.63 USD per BSQ\n\n## Contributions delivered\n\nTitle | Team | USD | Link | Notes |\n-- | -- | -- | -- | -- |\nClient - Dark Mode - | dev | 0 | https://github.com/bisq-network/bisq/pull/4121 | for reference |\nClient - Cleaned up TOR icon (merged) | dev | 50 | /4377 |  \n";
+            var testOutput = crParserNS.parseContributionRequest(testInput1);
+            addTestOutput(testName1, testOutput, /NO ERRORS/gm);
+            addTestOutput(testName1, testOutput, /Parsed lineitem: {"team":"DEV","amount":50}/gmi);
+            var testOutput2 = crParserNS.writeIssuance();
+            addTestOutput(testName1+" issuance", testOutput2, /DEV.79.37.50.00/gmi);
+            addTestOutput("total issuance should match BSQ requested", testOutput2, /Total Issuance: 79.37 BSQ/gm);
+        }
     }
 
     function addTestOutput(testName, testOutput, testExpected) {

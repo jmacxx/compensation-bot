@@ -10,6 +10,7 @@
         compRequest: null,
         bsqRate: 0.99, // will be read from issues list
         cycle: 99,       // will be read from issues list
+        strict: true,
         validTeams: [ "dev", "growth", "ops", "support", "security", "admin" ],
 
         writeLinterSummary: function() {
@@ -189,9 +190,13 @@
                         var z = y[0].replace(/[^\d.]/g, '');
                         if (z.length > 0) {
                             var specifiedBsqRate = Number(z);
-                            var precision = 0.001;
-                            if (Math.abs(this.bsqRate - specifiedBsqRate) > precision)	{
-                                this.compRequest.errorList.push("Incorrect BSQ rate specified: " + z + ", expected: " + this.bsqRate);
+                            if (this.strict) {
+                                var precision = 0.001;
+                                if (Math.abs(this.bsqRate - specifiedBsqRate) > precision)	{
+                                    this.compRequest.errorList.push("Incorrect BSQ rate specified: " + z + ", expected: " + this.bsqRate);
+                                }
+                            } else {
+                                this.bsqRate = specifiedBsqRate;
                             }
                             this.compRequest.infoList.push("Read BSQ rate from summary: " + specifiedBsqRate);
                         }
