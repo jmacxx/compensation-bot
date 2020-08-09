@@ -7,7 +7,8 @@ var crParser = require('./crParser')
  */
 module.exports = app => {
     app.log('app loaded!')
-    var html = httpGet('https://api.github.com/repos/bisq-network/compensation/issues?creator=mwithm');
+    // grab the current cycle BSQ rate issue posted by mwithm
+    var html = httpGet('https://api.github.com/repos/bisq-network/compensation/issues?creator=mwithm&sort=created-asc');
     app.log(crParser.configLoadBsqRate(html));
 
     // bot workflow:
@@ -20,20 +21,7 @@ module.exports = app => {
     var safeMode = false;
  
     app.on(['issues.opened','issues.edited'], async context => {
-        logContextInfo(context);
-        if (context.isBot) {
-            app.log("isBot=true, ignoring");
-            return;
-        }
-
-        crParser.parseContributionRequest(context.payload.issue.body);
-        // log our parsing result
-        app.log(crParser.writeLinterSummary());
-        app.log(crParser.writeIssuance());
-
-        var isWIP = /\[WIP\]/gi.test(context.payload.issue.title);
-        if (isWIP) {
-            app.log("issue is marked [WIP], therefore not making any changes");
+        if (!checkContext(context)) {
             return;
         }
 
@@ -55,18 +43,9 @@ module.exports = app => {
     })
 
     app.on(['issues.labeled', 'issues.milestoned'], async context => {
-        logContextInfo(context);
-        if (context.isBot) {
-            app.log("isBot=true, ignoring");
+        if (!checkContext(context)) {
             return;
         }
-
-        var isWIP = /\[WIP\]/gi.test(context.payload.issue.title);
-        if (isWIP) {
-            app.log("issue is marked [WIP], therefore not making any changes");
-            return;
-        }
-        crParser.parseContributionRequest(context.payload.issue.body);
 
         // issuance should be written after the comp request has been accepted
         if (isIssueAccepted(context)) {
@@ -80,11 +59,32 @@ module.exports = app => {
         }
     })
 
-    function logContextInfo(context) {
+    function checkContext(context) {
+        if (context.isBot) {        // update was from a bot, so we don't process it
+            app.log("isBot=true, ignoring");
+            return false;
+        }
+
         app.log("event: " + context.event + " action: " + context.payload.action);
         app.log("title: " + context.payload.issue.title);
         app.log("safeMode: " + safeMode);
         app.log("================ ISSUE # " + context.payload.issue.number + " =====================");
+
+        // parse and log the CR so we can see in the logs what's going on
+        crParser.parseContributionRequest(context.payload.issue.body);
+        app.log(crParser.writeLinterSummary());
+        app.log(crParser.writeIssuance());
+
+        if (context.payload.issue.state != 'open') {
+            app.log("issue is not open, therefore ignoring");
+            return false;
+        }
+        var isWIP = /\[WIP\]/gi.test(context.payload.issue.title);
+        if (isWIP) {
+            app.log("issue is marked [WIP], therefore not making any changes");
+            return false;
+        }
+        return true;
     }
 
     function isIssueAccepted(context) {
