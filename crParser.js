@@ -266,40 +266,6 @@
             return true;
         },
 
-        // an alternative lineitem format, markdown section each line beginning with bullet point
-        //  fields separated by spaces, team = first word, amount = last word
-        findNextTableInText2 : function(lines, tableInfo) {
-            tableInfo.foundStart = -1;
-            tableInfo.foundEnd = -1;
-            for (i=tableInfo.beginAtLine; i < lines.length; i++) {
-                var x = lines[i].replace(/[\t\r]/g, '');
-                if (tableInfo.foundStart < 0 && x.match(/^- .* USD$/g)) {
-                    // found the start of the markdown table.
-                    tableInfo.foundStart = i;
-                    continue;
-                }
-                if (tableInfo.foundStart >= 0 && tableInfo.foundEnd < 0 && !x.match(/^- .* USD$/g)) {
-                    // found the end of the markdown table.
-                    tableInfo.foundEnd = i;
-                    break;
-                }
-            }
-            if (tableInfo.foundStart < 0 || tableInfo.foundEnd < 0) {
-                // error table not found
-                return false;
-            }
-            // copy the table data into tableInfo.tableLines
-            for (i=tableInfo.foundStart; i < tableInfo.foundEnd; i++) {
-                var x = lines[i].replace(/(- |[-\t\r])/g, '').replace(/ USD/g, '');
-                var fields = x.split(' ');
-                var amount = fields[fields.length-1];
-                var team = fields[0];
-                var tableFormat = "|"+x+"|" +team+ "|" + amount + "||";
-                tableInfo.tableLines.push(tableFormat);
-            }
-            return true;
-        },
-
         // parse the contents of the table, ignore the header row
         parseRequestsFromTable : function(lines) {
             var recordsParsed = 0;
@@ -362,11 +328,6 @@
             do {
                 tableInfo.beginAtLine = tableInfo.foundEnd+1;
             } while (this.findNextTableInText(lines, tableInfo));
-            
-            // test code to use alternate format bullet point list
-            if (tableInfo.tableLines == 0) {
-                this.findNextTableInText2(lines, tableInfo);
-            }
             
             if (this.parseRequestsFromTable(tableInfo.tableLines) > 0) {
                 // now sum up the USD amount by team 

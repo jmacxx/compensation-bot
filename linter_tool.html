@@ -412,8 +412,6 @@
         {
             var testName1 = "tabular lineitem format";
             var testInput1 = "## Summary\n- USD requested: $60\n- BSQ requested:95.23\n- BSQ rate: 0.63\n## Contributions delivered\n|title|team|USD|link|notes|\n|---|---|---|---|---|\n|title|admin|10|||\n|title|growth|11|||\n|title|ops|12|||\n|title|DEV|13|||\n|title|support|14|||\n<!-- hello world -->\n";
-            var testName2 = "bullet lineitem format";
-            var testInput2 = "## Summary\n- USD requested: $60\n- BSQ requested:95.23\n- BSQ rate: 0.63\n## Contributions delivered\n\n- Admin blah blah blah 10 USD\n- Growth blah blah blah 11 USD\n- Ops blah blah blah 12 USD\n- Dev blah blah blah 13 USD\n- Support blah blah blah 14 USD\n";
             var testExpected0 = /NO ERRORS/gm;
             var testExpected1 = /Parsed lineitem: {"team":"ADMIN","amount":10}/gmi;
             var testExpected2 = /Parsed lineitem: {"team":"GROWTH","amount":11}/gmi;
@@ -427,14 +425,6 @@
             addTestOutput(testName1, testOutput, testExpected3);
             addTestOutput(testName1, testOutput, testExpected4);
             addTestOutput(testName1, testOutput, testExpected5);
-
-            testOutput = crParserNS.parseContributionRequest(testInput2);
-            addTestOutput(testName2, testOutput, testExpected0);
-            addTestOutput(testName2, testOutput, testExpected1);
-            addTestOutput(testName2, testOutput, testExpected2);
-            addTestOutput(testName2, testOutput, testExpected3);
-            addTestOutput(testName2, testOutput, testExpected4);
-            addTestOutput(testName2, testOutput, testExpected5);
         }
         {
             // check that requesting too much BSQ produces an error
