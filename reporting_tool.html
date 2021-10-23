@@ -1,4 +1,4 @@
-<!DOCTYPE html> 
+<!DOCTYPE html>
 <html lang="en">
 <head>
     <title>Compensation Reporting</title>
@@ -27,7 +27,7 @@
 <script type="text/javascript">
 
     var rawdata = "[]";
-    
+
     window.readyHandlers = [];
     window.ready = function ready(handler) {
         window.readyHandlers.push(handler);
@@ -52,11 +52,11 @@
 
 	//-- =================================================================== -->
 	// load the persisted data
-	    
+
 	function loadJsonFile(evt) {
 		var reader = new FileReader();
 		reader.onloadend = function(evt) {
-		    debugger;
+		    //debugger;
 		    try {
 			    rawdata = evt.target.result;
 			    showDbContents();
@@ -86,7 +86,7 @@
             alert("[error]: " + e.message);
         }
     }
-    
+
     function reparseCycleData() {
         try {
             var cycle = Number(document.getElementById('cycle').value);
@@ -99,7 +99,7 @@
                 case 16: milestone=7; break;
                 case 17: milestone=8; break;
                 case 18: milestone=9; break;
-                default: milestone=0;
+                default: milestone=cycle-9;     // assuming milestone id always increments by 1
             }
             crParserNS.cycle = cycle;
             crParserNS.strict=false;    // allow each CR to specify its own rate
@@ -107,16 +107,13 @@
             var url = `https://api.github.com/repos/bisq-network/compensation/issues?since=%222020-04-25%22&milestone=${milestone}&labels=parsed:valid&state=all`;
             if (!confirm(`Are you sure you want to reparse all the cycle ${cycle} comp requests from Github?\n\nurl=${url}`)) {
                 return;
-            }         
-            if (!confirm("Really sure?  You shouldn't make this query willy-nilly")) {
-                return;
-            }         
+            }
             var html = httpGet(url);
             var db = JSON.parse(html);
             var errorCount = 0;
             var errorReport = "";
             var recordsCount = 0;
-            debugger;
+            //debugger;
             for (let issue of db) {
                 recordsCount += 1;
                 crParserNS.parseContributionRequest(issue.body);
@@ -129,16 +126,17 @@
                 }
             }
             alert(`processed ${recordsCount}, encountered ${errorCount} errors during parsing\n\n${errorReport}`);
-            alert(rawdata);
+            alert("Please see data dump in console.");
+            console.log(rawdata); //rawdata string length exceeds what can be shown in browser's alert box
         }
         catch(e) {
             console.log(e);
             alert("[error]: " + e.message);
         }
     }
-        
+
     function updateIssuanceDb(cycleNbr, crNbr, userName) {
-        debugger;
+        //debugger;
         let db = JSON.parse(rawdata);
         var currentCycle = { cycle:cycleNbr, entries:[]};
         var currentCycleIdx = -1;
@@ -169,7 +167,7 @@
             currentCycleIdx = db.push(newCycle) - 1;
         }
         db[currentCycleIdx].entries = updatedCycle;
-        
+
         rawdata = JSON.stringify(db);
     }
 
@@ -187,7 +185,7 @@
         var myMap = new Map();
         for (let entry of currentCycle) {
            myMap.set(entry.crNbr, entry.issuance);
-        } 
+        }
         // populate teamIssuance with zero for each team initially
         var teamIssuance = new Map();
         for (const i of crParserNS.validTeams) {
